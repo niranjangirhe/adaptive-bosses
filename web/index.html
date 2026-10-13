@@ -104,9 +104,60 @@
       </aside>
     </main>
 
-    <main id="sim-view" class="sim" hidden></main>
+    <main id="sim-view" class="sim" hidden>
+      <section class="card">
+        <h2>Simulate</h2>
+        <p class="muted small">Bot players with fixed habits fight a static boss and an adaptive boss for a number of attempts. Each bot gets better every attempt: it learns to read the tells and to beat the base moveset. The adaptive boss uses the decision model, taunt model and "How much it adapts" set at the top, so this also times every adaptation step.</p>
+        <form id="sim-form" class="sim-form">
+          <fieldset id="sim-bots" class="bots"><legend>Bots</legend></fieldset>
+          <label><span>Attempts</span><input id="sim-attempts" type="number" min="2" max="30" value="12" /></label>
+          <label><span>Seed</span><input id="sim-seed" type="number" min="1" value="1" /></label>
+          <p id="sim-using" class="muted small"></p>
+          <button id="sim-run" type="submit" class="primary">Run</button>
+        </form>
+        <div id="sim-progress" class="progress" hidden><span></span></div>
+        <p id="sim-status" class="muted small"></p>
+      </section>
+
+      <div id="sim-results" hidden>
+        <section class="card">
+          <div class="row spread">
+            <h2>Results</h2>
+            <button id="sim-save" class="ghost">Download JSON</button>
+          </div>
+          <div id="sim-tiles" class="tiles"></div>
+        </section>
+
+        <section class="card">
+          <h2>Challenge by attempt, averaged over the bots</h2>
+          <div class="legend">
+            <span><i class="dash" style="border-color: var(--series-1)"></i>Static boss</span>
+            <span><i style="background: var(--series-2)"></i>Adaptive boss</span>
+            <span><i class="band"></i>35–60% target</span>
+          </div>
+          <div id="sim-chart" class="chart"></div>
+          <p class="muted small">Share of the bot's health lost in each attempt (100% if it lost). Hover for values.</p>
+        </section>
+
+        <section class="card">
+          <h2>Each bot, later attempts</h2>
+          <div class="scroll"><table id="sim-bots-table"></table></div>
+        </section>
+
+        <section class="card">
+          <h2>Models and memory</h2>
+          <dl id="sim-resources" class="resources"></dl>
+        </section>
+
+        <section class="card">
+          <h2>Every adaptive attempt</h2>
+          <div class="scroll"><table id="sim-table"></table></div>
+        </section>
+      </div>
+    </main>
 
     <script type="module" src="app.js"></script>
+    <script type="module" src="sim.js"></script>
     <script type="module" src="system.js"></script>
   </body>
 </html>
