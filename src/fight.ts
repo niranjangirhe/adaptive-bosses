@@ -69,7 +69,7 @@ export type Outcome = { dealt: number; taken: number; text: string };
 const BASE: Record<Move, Outcome> = {
   shoot: { dealt: 6, taken: 4, text: "Your shots land from a safe distance." },
   roll: { dealt: 0, taken: 0, text: "You roll clear of its swing." },
-  flank: { dealt: 12, taken: 4, text: "You slip behind it and hit hard." },
+  flank: { dealt: 12, taken: 3, text: "You slip behind it and hit hard." },
   combo: { dealt: 10, taken: 6, text: "Your favourite combo connects." },
   strike: { dealt: 8, taken: 7, text: "You trade blows head on." },
 };
@@ -77,21 +77,21 @@ const BASE: Record<Move, Outcome> = {
 const AGAINST: Record<Counter, Partial<Record<Move, Outcome>>> = {
   charge: {
     shoot: { dealt: 0, taken: 18, text: "It charges across the arena and slams into you." },
-    roll: { dealt: 16, taken: 0, text: "You sidestep the charge and it is stuck. Free hits." },
+    roll: { dealt: 12, taken: 4, text: "You sidestep the charge and it is stuck. Free hits." },
     combo: { dealt: 6, taken: 12, text: "The charge cuts your combo short." },
     strike: { dealt: 6, taken: 12, text: "You meet the charge head on and come off worse." },
   },
   delay: {
     roll: { dealt: 0, taken: 16, text: "You roll too early and the held swing catches you." },
-    strike: { dealt: 16, taken: 0, text: "You interrupt the slow swing before it lands." },
+    strike: { dealt: 12, taken: 4, text: "You interrupt the slow swing before it lands." },
   },
   rearguard: {
     flank: { dealt: 0, taken: 16, text: "Its tail sweeps behind it and knocks you down." },
-    strike: { dealt: 16, taken: 4, text: "It is guarding its back, so its front is open." },
+    strike: { dealt: 12, taken: 4, text: "It is guarding its back, so its front is open." },
   },
   comboblock: {
     combo: { dealt: 0, taken: 12, text: "It blocks your favourite opener and hits back." },
-    strike: { dealt: 14, taken: 6, text: "A different opener catches it off guard." },
+    strike: { dealt: 12, taken: 5, text: "A different opener catches it off guard." },
     flank: { dealt: 14, taken: 8, text: "A different opener catches it off guard." },
     shoot: { dealt: 8, taken: 4, text: "It was waiting for your combo, not your shots." },
   },
