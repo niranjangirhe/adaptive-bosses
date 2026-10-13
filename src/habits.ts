@@ -3,7 +3,7 @@
  * with recent attempts counting more, and how often they answer a tell with
  * the move that beats it.
  */
-import { COUNTER_INFO, MOVES, MOVE_INFO, type AttemptState, type Move } from "./fight.ts";
+import { MOVES, MOVE_INFO, type AttemptState, type Move } from "./fight.ts";
 
 export type Habits = {
   /** share of rounds spent on each move, 0..1, recent attempts weighted more */
@@ -73,6 +73,3 @@ export function describeHabits(h: Habits): string {
   }
   return lines.join(" ");
 }
-
-/** The habit each counter is bought against, as text for the boss's view. */
-export const habitOf = (c: keyof typeof COUNTER_INFO) => MOVE_INFO[COUNTER_INFO[c].against].habit;
