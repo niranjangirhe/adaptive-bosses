@@ -5,12 +5,14 @@
  *   POST /api/next      { run, decider, voice } -> the boss adapts and the next attempt starts
  *   POST /api/move      { run, move } -> the round is played
  *   GET  /api/system    CPU, RAM and GPU use, and how much memory each model takes
+ *   POST /api/simulate  { bots, attempts, strength, seed, decider, voice } -> one JSON line per attempt, then the result
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import { MOVES, type Move } from "./fight.ts";
 import { GameError, defaultServices, nextAttempt, parseRun, play, type Services, type Settings } from "./game.ts";
+import { BOTS, simulate } from "./simulate.ts";
 import { systemStats } from "./system.ts";
 
 const TYPES: Record<string, string> = {
@@ -74,9 +76,38 @@ export function createApp(root: string, services: Services = defaultServices()) 
     throw new HttpError(404, "not found");
   }
 
+  let simulating = false;
+
+  /** Streams progress as newline-delimited JSON so the page can draw it live. */
+  async function simulateStream(req: IncomingMessage, res: ServerResponse) {
+    if (simulating) throw new HttpError(409, "a simulation is already running");
+    const body = await readJson(req);
+    const bots = Array.isArray(body.bots) ? body.bots.filter((b): b is string => typeof b === "string" && b in BOTS) : [];
+    const opts = {
+      ...settingsFrom(body),
+      bots: bots.length ? bots : Object.keys(BOTS),
+      attempts: Math.max(2, Math.min(30, Number(body.attempts) || 12)),
+      strength: Math.max(0, Math.min(100, Number(body.strength) || 0)),
+      seed: Number(body.seed) || 1,
+    };
+    simulating = true;
+    res.writeHead(200, { "content-type": "application/x-ndjson; charset=utf-8" });
+    const line = (o: unknown) => res.write(JSON.stringify(o) + "\n");
+    try {
+      const result = await simulate(opts, services, (attempt, done, total) => line({ type: "attempt", done, total, attempt }));
+      line({ type: "done", result });
+    } catch (e) {
+      line({ type: "error", error: (e as Error).message });
+    } finally {
+      simulating = false;
+      res.end();
+    }
+  }
+
   return createServer(async (req, res) => {
     const path = new URL(req.url ?? "/", "http://localhost").pathname;
     try {
+      if (req.method === "POST" && path === "/api/simulate") return await simulateStream(req, res);
       if (path.startsWith("/api/")) return send(res, 200, await api(req, path));
       const target = resolve(webDir, "." + (path === "/" ? "/index.html" : path));
       if (!target.startsWith(webDir + sep)) throw new HttpError(404, "not found");
