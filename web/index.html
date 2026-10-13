@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The adaptive boss</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>The adaptive boss</h1>
+        <p class="muted">It notices how you fight, and comes back ready for it.</p>
+        <nav class="views">
+          <button data-view="fight" aria-pressed="true">Fight</button>
+          <button data-view="sim" aria-pressed="false">Simulate</button>
+        </nav>
+      </div>
+      <div class="settings">
+        <label>
+          <span>Decisions <i id="decider-dot" class="dot"></i></span>
+          <select id="decider">
+            <option value="gliclass">GLiClass</option>
+            <option value="rules">Built-in rules</option>
+          </select>
+        </label>
+        <label>
+          <span>Taunts <i id="voice-dot" class="dot"></i></span>
+          <select id="voice"></select>
+        </label>
+        <label class="strength">
+          <span>How much it adapts <b id="strength-value">55</b></span>
+          <input id="strength" type="range" min="0" max="100" step="5" value="55" />
+        </label>
+      </div>
+    </header>
+
+    <section id="system" class="system" aria-label="System"></section>
+
+    <main id="fight-view" class="layout">
+      <section class="scene card">
+        <div class="scene-head">
+          <h2 id="attempt-title">Attempt 1</h2>
+          <button id="restart" class="ghost">New run</button>
+        </div>
+
+        <div class="hp">
+          <div><span>You</span><span class="track"><span id="hp-you" class="fill you"></span></span><b id="hp-you-n">100</b></div>
+          <div><span>Boss</span><span class="track"><span id="hp-boss" class="fill boss"></span></span><b id="hp-boss-n">100</b></div>
+        </div>
+
+        <div id="arena" class="arena"></div>
+
+        <div class="speech">
+          <p id="boss-line" class="bubble">…</p>
+          <p id="credit" class="credit muted"></p>
+        </div>
+
+        <p id="tell" class="tell"></p>
+        <p id="result" class="result muted"></p>
+
+        <div id="moves" class="moves"></div>
+        <div id="between" class="between" hidden>
+          <p id="verdict"></p>
+          <button id="next" class="primary">Next attempt</button>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="card">
+          <h2>How the boss adapted <span id="decided-by" class="muted small"></span></h2>
+          <div id="adapt"></div>
+        </section>
+
+        <section class="card">
+          <h2>What changes, and its weakness</h2>
+          <ul id="counters" class="counters"></ul>
+        </section>
+
+        <section class="card">
+          <h2>What it has seen you do</h2>
+          <div id="habits"></div>
+        </section>
+
+        <section class="card">
+          <h2>Challenge by attempt</h2>
+          <div id="chart" class="chart"></div>
+          <p class="muted small">Share of your health lost in each attempt (100% if you lost). The shaded band is the 35–60% range the sketch aims for.</p>
+        </section>
+
+        <section class="card">
+          <h2>This attempt</h2>
+          <ol id="log" class="log"></ol>
+        </section>
+
+        <details class="card behind">
+          <summary><h2>Behind the scenes</h2></summary>
+          <p class="muted small">Between attempts, a typed decision model reads how you have been fighting and scores the counters the boss can buy; the boss splits its points by those scores. A small language model then gives it a line about what it noticed.</p>
+          <h3>1. What the decision model read</h3>
+          <p id="situation" class="mono"></p>
+          <h3>2. What the language model was asked</h3>
+          <pre id="prompt" class="mono"></pre>
+        </details>
+      </aside>
+    </main>
+
+    <main id="sim-view" class="sim" hidden></main>
+
+    <script type="module" src="app.js"></script>
+    <script type="module" src="system.js"></script>
+  </body>
+</html>
