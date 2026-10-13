@@ -1,11 +1,11 @@
 /**
  * Local server for the game page. Serves web/ and these endpoints:
  *
- *   GET  /api/status    which decision model and which language models are running
- *   POST /api/next      { run, decider, voice } -> the boss adapts and the next attempt starts
+ *   GET  /api/status    whether the decision model is running
+ *   POST /api/next      { run, decider } -> the boss adapts and the next attempt starts
  *   POST /api/move      { run, move } -> the round is played
  *   GET  /api/system    CPU, RAM and GPU use, and how much memory each model takes
- *   POST /api/simulate  { bots, attempts, strength, seed, decider, voice } -> one JSON line per attempt, then the result
+ *   POST /api/simulate  { bots, attempts, strength, seed, decider } -> one JSON line per attempt, then the result
  */
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -52,7 +52,6 @@ export async function readJson(req: IncomingMessage): Promise<Record<string, unk
 
 export const settingsFrom = (body: Record<string, unknown>): Settings => ({
   decider: body.decider === "gliclass" ? "gliclass" : "rules",
-  voice: typeof body.voice === "string" && body.voice ? body.voice : null,
 });
 
 export function createApp(root: string, services: Services = defaultServices()) {
@@ -60,8 +59,7 @@ export function createApp(root: string, services: Services = defaultServices()) 
 
   async function api(req: IncomingMessage, path: string) {
     if (req.method === "GET" && path === "/api/status") {
-      const [gliclass, models] = await Promise.all([services.gliclass.health(), services.ollama.models()]);
-      return { gliclass, ollama: models === null ? null : { models } };
+      return { gliclass: await services.gliclass.health() };
     }
     if (req.method === "GET" && path === "/api/system") return systemStats(services);
     if (req.method === "POST" && path === "/api/next") {

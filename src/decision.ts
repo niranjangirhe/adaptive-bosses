@@ -100,7 +100,16 @@ export function budgetFrom(scores: Option<Counter>[], strength: number): Budget 
   const budget: Budget = { ...NO_COUNTERS };
   const kept = scores.filter((s) => s.p * strength >= MIN_POINTS);
   const total = kept.reduce((a, s) => a + s.p, 0);
-  for (const s of kept) budget[s.id] = Math.round((strength * s.p) / total);
+  if (!total) return budget;
+  // round down, then hand the leftover points to the largest remainders, so the
+  // points always add up to exactly the strength
+  const exact = kept.map((s) => ({ id: s.id, x: (strength * s.p) / total }));
+  for (const e of exact) budget[e.id] = Math.floor(e.x);
+  let left = Math.round(strength) - exact.reduce((a, e) => a + budget[e.id], 0);
+  for (const e of [...exact].sort((a, b) => (b.x % 1) - (a.x % 1))) {
+    if (left-- <= 0) break;
+    budget[e.id]++;
+  }
   return budget;
 }
 

@@ -2,7 +2,6 @@ import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import { GliclassModel, RulesModel } from "../src/decision.ts";
-import { Ollama } from "../src/ollama.ts";
 import { createApp } from "../src/server.ts";
 import { parseNvidiaSmi } from "../src/system.ts";
 
@@ -12,7 +11,6 @@ const offline = (async () => {
 const server = createApp(process.cwd(), {
   gliclass: new GliclassModel("http://fake", offline),
   rules: new RulesModel(),
-  ollama: new Ollama("http://fake", offline),
 }).listen(0);
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 after(() => server.close());
@@ -21,7 +19,7 @@ const post = (path: string, body: unknown) => fetch(`${base}${path}`, { method: 
 
 test("serves the page and reports what is running", async () => {
   assert.match(await (await fetch(base)).text(), /The adaptive boss/);
-  assert.deepEqual(await (await fetch(`${base}/api/status`)).json(), { gliclass: null, ollama: null });
+  assert.deepEqual(await (await fetch(`${base}/api/status`)).json(), { gliclass: null });
 });
 
 test("starts a run and plays a round", async () => {

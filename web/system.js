@@ -33,10 +33,6 @@ function render(s) {
     const mem = [s.decider.rss_mb != null && `${gb(s.decider.rss_mb)} RAM`, s.decider.gpu_mb != null && `${gb(s.decider.gpu_mb)} GPU`].filter(Boolean);
     models.push(`GLiClass on ${esc(s.decider.device)}${mem.length ? ` <b>${mem.join(", ")}</b>` : ""}`);
   }
-  for (const m of s.ollama) {
-    const onGpu = m.sizeMB > 0 ? Math.round((m.vramMB / m.sizeMB) * 100) : 0;
-    models.push(`${esc(m.name)} <b>${gb(m.sizeMB)}</b> ${onGpu > 0 ? `(${onGpu}% on GPU)` : "(CPU)"}`);
-  }
   models.push(`game server <b>${gb(s.serverMB)}</b>`);
   parts.push(`<span class="stat models">Models: ${models.join(" · ")}</span>`);
   el.innerHTML = parts.join("");

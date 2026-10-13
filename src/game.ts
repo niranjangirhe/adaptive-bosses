@@ -1,22 +1,18 @@
 /**
  * The game as the page plays it: start a run, play moves, and between
- * attempts let the boss adapt (decide) and taunt (speak).
+ * attempts let the boss adapt.
  */
 import { GliclassModel, RulesModel, decide, type Decision } from "./decision.ts";
 import { COUNTERS, MAX_ROUNDS, MOVES, replayRun, type AttemptState, type Move, type Run } from "./fight.ts";
 import { habits, type Habits } from "./habits.ts";
-import { Ollama } from "./ollama.ts";
-import { taunt, type Taunt } from "./taunt.ts";
 
-export type Services = { gliclass: GliclassModel; rules: RulesModel; ollama: Ollama };
+export type Services = { gliclass: GliclassModel; rules: RulesModel };
 
-export const defaultServices = (): Services => ({ gliclass: new GliclassModel(), rules: new RulesModel(), ollama: new Ollama() });
+export const defaultServices = (): Services => ({ gliclass: new GliclassModel(), rules: new RulesModel() });
 
 export type Settings = {
   /** "gliclass" or "rules" */
   decider: string;
-  /** an Ollama model name, or null for authored taunts */
-  voice: string | null;
 };
 
 export type View = { run: Run; attempts: AttemptState[]; current: AttemptState; habits: Habits };
@@ -36,17 +32,16 @@ export function play(run: Run, move: Move): View {
   return view(next);
 }
 
-export type Adapted = View & { decision: Decision; taunt: Taunt };
+export type Adapted = View & { decision: Decision };
 
-/** Ends the current attempt's planning: the boss looks back, picks counters, and taunts. */
+/** Ends the current attempt's planning: the boss looks back and picks counters. */
 export async function nextAttempt(run: Run, settings: Settings, s: Services): Promise<Adapted> {
   const past = replayRun(run);
   if (past.length && !past.at(-1)!.over) throw new GameError("finish this attempt first");
   const h = habits(past);
   const decision = await decide(h, run.strength, settings.decider === "gliclass" ? s.gliclass : s.rules, s.rules);
-  const spoken = await taunt(h, decision, s.ollama, settings.voice);
   const next: Run = { ...run, attempts: [...run.attempts, { budget: decision.budget, moves: [] }] };
-  return { ...view(next), decision, taunt: spoken };
+  return { ...view(next), decision };
 }
 
 /* ---------------- checking what the page sends ---------------- */

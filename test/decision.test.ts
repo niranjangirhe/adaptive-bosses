@@ -30,6 +30,17 @@ test("small shares go back into the base moveset, and the rest adds up to the st
   assert.equal(b.rearguard, 0);
   assert.equal(b.comboblock, 0);
   assert.equal(b.charge + b.delay, 60);
+  // rounding each share on its own would give 13 + 13 + 38 + 38 = 102
+  const even = budgetFrom(
+    [
+      { id: "charge", p: 0.125 },
+      { id: "delay", p: 0.125 },
+      { id: "rearguard", p: 0.375 },
+      { id: "comboblock", p: 0.375 },
+    ],
+    100,
+  );
+  assert.equal(even.charge + even.delay + even.rearguard + even.comboblock, 100);
 });
 
 test("GLiClass reads the habits and its scores set the budget", async () => {

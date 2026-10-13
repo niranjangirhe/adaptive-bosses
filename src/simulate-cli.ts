@@ -1,5 +1,5 @@
 /**
- * npm run simulate -- --attempts 12 --strength 55 --decider gliclass --voice qwen3:0.6b
+ * npm run simulate -- --attempts 12 --strength 55 --decider gliclass
  *
  * In Windows PowerShell, quote the separator: npm run simulate '--' --attempts 12 ...
  */
@@ -15,7 +15,6 @@ const { values } = parseArgs({
     strength: { type: "string", default: "55" },
     seed: { type: "string", default: "1" },
     decider: { type: "string", default: "gliclass" },
-    voice: { type: "string", default: "" },
     out: { type: "string" },
   },
 });
@@ -26,10 +25,9 @@ const opts = {
   strength: Math.max(0, Math.min(100, Number(values.strength) || 0)),
   seed: Number(values.seed) || 1,
   decider: values.decider === "rules" ? "rules" : "gliclass",
-  voice: values.voice || null,
 };
 
-console.log(`${opts.bots.join(", ")}: ${opts.attempts} attempts, strength ${opts.strength}, decisions ${opts.decider}, taunts ${opts.voice ?? "authored"}\n`);
+console.log(`${opts.bots.join(", ")}: ${opts.attempts} attempts, strength ${opts.strength}, decisions ${opts.decider}\n`);
 const r = await simulate(opts, defaultServices(), (_a, done, total) => process.stdout.write(`\rattempt ${done}/${total}`));
 process.stdout.write("\n\n");
 console.log(report(r));
@@ -57,9 +55,7 @@ function report(r: SimResult) {
     "Time per adaptation (after the first attempt):",
     row("decision", s.decisionMs),
     ...(s.decisionModelMs ? [row("  inside GLiClass", s.decisionModelMs)] : []),
-    row("taunt", s.tauntMs),
-    s.tokensPerSecond !== null ? `Generation  ${s.tokensPerSecond.toFixed(1)} tokens/s` : "",
-    `Fallbacks   decision ${s.decisionFallbacks}, taunt ${s.tauntFallbacks}`,
+    `Fallbacks   decision ${s.decisionFallbacks}`,
     `Total       ${r.wallSeconds.toFixed(1)} s, server ${r.services.serverRssMB.toFixed(0)} MB RAM`,
   ]
     .filter((l) => l !== "")

@@ -1,12 +1,11 @@
 /**
  * Live system stats for the page: CPU and RAM for the whole machine, the GPU
- * when an NVIDIA card and nvidia-smi are present, and how much memory each
- * model is using.
+ * when an NVIDIA card and nvidia-smi are present, and how much memory the
+ * decision model is using.
  */
 import { execFile } from "node:child_process";
 import os from "node:os";
 import type { DeciderHealth } from "./decision.ts";
-import type { LoadedModel } from "./ollama.ts";
 import type { Services } from "./game.ts";
 
 export type Gpu = { name: string; utilisation: number; memoryUsedMB: number; memoryTotalMB: number };
@@ -17,7 +16,6 @@ export type SystemStats = {
   /** null when no NVIDIA GPU (or no nvidia-smi) was found */
   gpus: Gpu[] | null;
   decider: DeciderHealth | null;
-  ollama: LoadedModel[];
   serverMB: number;
 };
 
@@ -83,14 +81,13 @@ function nvidiaSmi(): Promise<Gpu[] | null> {
 /* ---------------- all together ---------------- */
 
 export async function systemStats(services: Services): Promise<SystemStats> {
-  const [gpus, decider, ollama] = await Promise.all([nvidiaSmi(), services.gliclass.health(), services.ollama.loaded()]);
+  const [gpus, decider] = await Promise.all([nvidiaSmi(), services.gliclass.health()]);
   const totalMB = os.totalmem() / 2 ** 20;
   return {
     cpu: { model: os.cpus()[0]?.model.trim() ?? "unknown", cores: os.cpus().length, usage: cpuUsage() },
     memory: { usedMB: totalMB - os.freemem() / 2 ** 20, totalMB },
     gpus,
     decider,
-    ollama,
     serverMB: process.memoryUsage().rss / 2 ** 20,
   };
 }

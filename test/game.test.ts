@@ -2,13 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GliclassModel, RulesModel } from "../src/decision.ts";
 import { GameError, nextAttempt, parseRun, play } from "../src/game.ts";
-import { Ollama } from "../src/ollama.ts";
 
 const offline = (async () => {
   throw new Error("offline");
 }) as typeof fetch;
-const services = { gliclass: new GliclassModel("http://fake", offline), rules: new RulesModel(), ollama: new Ollama("http://fake", offline) };
-const settings = { decider: "gliclass", voice: null };
+const services = { gliclass: new GliclassModel("http://fake", offline), rules: new RulesModel() };
+const settings = { decider: "gliclass" };
 
 test("a run: fight, finish, and the boss adapts to what it saw", async () => {
   let v = await nextAttempt({ seed: 3, strength: 55, attempts: [] }, settings, services);
@@ -20,7 +19,6 @@ test("a run: fight, finish, and the boss adapts to what it saw", async () => {
   assert.equal(next.current.attempt, 2);
   assert.equal(next.decision.by, "built-in rules");
   assert.ok(next.current.budget.rearguard > 0);
-  assert.equal(next.taunt.by, "authored lines");
 });
 
 test("the next attempt can't start before this one is over", async () => {

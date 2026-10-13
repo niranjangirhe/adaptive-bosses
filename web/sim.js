@@ -31,8 +31,7 @@ function show(view) {
 
 function describeSettings() {
   const d = $("#decider").selectedOptions[0]?.textContent ?? "";
-  const v = $("#voice").selectedOptions[0]?.textContent ?? "";
-  $("#sim-using").textContent = `Decisions: ${d}. Taunts: ${v}. Adapts: ${$("#strength").value}. Change these at the top.`;
+  $("#sim-using").textContent = `Decisions: ${d}. Adapts: ${$("#strength").value}. Change these at the top.`;
 }
 
 /* ---------------- running ---------------- */
@@ -47,7 +46,6 @@ async function run(e) {
     seed: Number($("#sim-seed").value) || 1,
     strength: Number($("#strength").value),
     decider: $("#decider").value,
-    voice: $("#voice").value,
   };
   $("#sim-run").disabled = true;
   $("#sim-progress").hidden = false;
@@ -100,10 +98,8 @@ function render(r) {
     tile("In the target band", `${pct(s.inBandAdaptive)}`, `adaptive, later attempts · static ${pct(s.inBandStatic)}`),
     tile("Later challenge", pct(s.lateAdaptive), `adaptive · static ${pct(s.lateStatic)}`),
     tile("Decision", ms(s.decisionMs.p50), `median · p95 ${ms(s.decisionMs.p95)}` + (s.decisionModelMs ? ` · ${ms(s.decisionModelMs.p50)} in GLiClass` : "")),
-    tile("Taunt", ms(s.tauntMs.p50), `median · p95 ${ms(s.tauntMs.p95)}`),
+    tile("Fallbacks", `${s.decisionFallbacks}`, "times the built-in rules stood in"),
   ];
-  if (s.tokensPerSecond != null) tiles.push(tile("Generation", `${s.tokensPerSecond.toFixed(1)} tok/s`, "taunts"));
-  tiles.push(tile("Fallbacks", `${s.decisionFallbacks + s.tauntFallbacks}`, `decision ${s.decisionFallbacks} · taunt ${s.tauntFallbacks}`));
   $("#sim-tiles").innerHTML = tiles.join("");
 
   chart(r.curve);
@@ -119,7 +115,6 @@ function render(r) {
     "</tbody>";
 
   const d = r.services.decider;
-  const v = r.services.voiceModel;
   const rows = [
     ["Machine", `${esc(r.machine.cpu)}, ${r.machine.cores} cores, ${r.machine.ramGB} GB RAM`],
     [
@@ -130,19 +125,13 @@ function render(r) {
           (d.gpu_mb != null ? `, ${mb(d.gpu_mb)} GPU` : "")
         : esc(r.attempts.at(-1)?.decisionBy ?? ""),
     ],
-    [
-      "Taunts",
-      v
-        ? `${esc(v.name)} on Ollama ${esc(r.services.ollamaVersion ?? "")}, ${mb(v.sizeMB)} in memory, ${v.vramMB > 0 ? `${Math.round((v.vramMB / v.sizeMB) * 100)}% on GPU` : "CPU only"}`
-        : esc(r.attempts.at(-1)?.tauntBy ?? ""),
-    ],
     ["Game server", `${mb(r.services.serverRssMB)} RAM`],
     ["Run", `${r.options.bots.length} bots × ${r.options.attempts} attempts, adapts ${r.options.strength}, seed ${r.options.seed}, ${new Date(r.startedAt).toLocaleString()}`],
   ];
   $("#sim-resources").innerHTML = rows.map(([k, val]) => `<dt>${k}</dt><dd>${val}</dd>`).join("");
 
   $("#sim-table").innerHTML =
-    `<thead><tr><th>Bot</th><th class="num">#</th><th class="num">Static</th><th class="num">Adaptive</th><th>Counters bought</th><th>Taunt</th><th class="num">Decision</th><th class="num">Taunt</th></tr></thead><tbody>` +
+    `<thead><tr><th>Bot</th><th class="num">#</th><th class="num">Static</th><th class="num">Adaptive</th><th>Counters bought</th><th class="num">Decision</th></tr></thead><tbody>` +
     r.attempts
       .map((a) => {
         const bought = Object.entries(a.budget)
@@ -150,10 +139,10 @@ function render(r) {
           .sort((x, y) => y[1] - x[1])
           .map(([c, p]) => `${COUNTER_NAME[c]} ${p}`)
           .join(", ");
-        const fb = [a.decisionFellBack && "decision fell back", a.tauntFellBack && "taunt fell back"].filter(Boolean).join(", ");
+        const fb = a.decisionFellBack ? '<div class="fb">decision fell back</div>' : "";
         return `<tr><td>${BOTS[a.bot]}</td><td class="num">${a.attempt}</td><td class="num">${pct(a.static)}</td><td class="num">${pct(a.adaptive)}</td>
-          <td>${bought || '<span class="muted">none</span>'}</td><td class="line">${esc(a.taunt)}${fb ? `<div class="fb">${fb}</div>` : ""}</td>
-          <td class="num">${a.attempt > 1 ? ms(a.decisionMs) : ""}</td><td class="num">${ms(a.tauntMs)}</td></tr>`;
+          <td>${bought || '<span class="muted">none</span>'}${fb}</td>
+          <td class="num">${a.attempt > 1 ? ms(a.decisionMs) : ""}</td></tr>`;
       })
       .join("") +
     "</tbody>";
@@ -226,7 +215,7 @@ $("#sim-bots").insertAdjacentHTML(
 );
 for (const b of document.querySelectorAll(".views button")) b.addEventListener("click", () => show(b.dataset.view));
 $("#sim-form").addEventListener("submit", run);
-for (const id of ["#decider", "#voice", "#strength"]) $(id).addEventListener("change", describeSettings);
+for (const id of ["#decider", "#strength"]) $(id).addEventListener("change", describeSettings);
 $("#strength").addEventListener("input", describeSettings);
 $("#sim-save").addEventListener("click", () => {
   if (!last) return;

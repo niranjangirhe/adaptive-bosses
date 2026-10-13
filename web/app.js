@@ -42,7 +42,7 @@ const COUNTERS = {
 };
 
 let run = null;
-/** what the server said when each attempt started: { decision, taunt } */
+/** what the server said when each attempt started: { decision } */
 let plans = [];
 let busy = false;
 
@@ -62,16 +62,10 @@ async function loadStatus() {
     ? `${s.gliclass.model} on ${s.gliclass.device}`
     : "GLiClass isn't running, so the built-in rules decide. Start it with: python decider/server.py";
   if (!s.gliclass) $("#decider").value = "rules";
-  const models = s.ollama?.models ?? [];
-  $("#voice").innerHTML =
-    models.map((m) => `<option value="${esc(m)}">${esc(m)}</option>`).join("") + `<option value="">Authored taunts</option>`;
-  $("#voice").value = models.find((m) => m.startsWith("qwen3")) ?? models[0] ?? "";
-  $("#voice-dot").className = `dot ${models.length ? "on" : "off"}`;
-  $("#voice-dot").title = models.length ? "Ollama is running" : "No Ollama models found, so the boss uses authored taunts.";
-  $("#voice").dispatchEvent(new Event("change"));
+  $("#decider").dispatchEvent(new Event("change"));
 }
 
-const settings = () => ({ decider: $("#decider").value, voice: $("#voice").value });
+const settings = () => ({ decider: $("#decider").value });
 
 async function startAttempt() {
   if (busy) return;
@@ -80,7 +74,7 @@ async function startAttempt() {
     if (run) run.strength = Number($("#strength").value);
     const data = await post("/api/next", { run: run ?? newRun(), ...settings() });
     run = data.run;
-    plans.push({ decision: data.decision, taunt: data.taunt });
+    plans.push({ decision: data.decision });
     render(data);
   } catch (e) {
     $("#result").textContent = `Something went wrong: ${e.message}`;
@@ -110,10 +104,7 @@ function newRun() {
 function setBusy(on, text) {
   busy = on;
   for (const b of document.querySelectorAll(".moves button, #next, #restart")) b.disabled = on;
-  if (on && text) {
-    $("#boss-line").textContent = "…";
-    $("#credit").textContent = text;
-  }
+  if (on && text) $("#credit").textContent = text;
 }
 
 /* ---------------- drawing ---------------- */
@@ -134,7 +125,6 @@ function render(v) {
   const cur = v.current;
   const plan = plans[cur.attempt - 1] ?? plans.at(-1);
   const d = plan?.decision;
-  const t = plan?.taunt;
 
   $("#attempt-title").textContent = `Attempt ${cur.attempt}`;
   $("#hp-you").style.width = `${cur.playerHp}%`;
@@ -148,11 +138,11 @@ function render(v) {
   const style = { range: share("shoot") * 100, dodge: share("roll") * 100, flank: share("flank") * 100, repeat: share("combo") * 100 };
   $("#arena").innerHTML = arenaSvg(style, cur.budget, cur.nextTell);
 
-  if (t) {
-    $("#boss-line").textContent = t.line;
-    const fb = [d?.fallbackReason, t.fallbackReason].filter(Boolean);
+  if (d) {
     $("#credit").textContent =
-      `Counters chosen by ${d.by} · taunt by ${t.by} · ${((d.ms + t.ms) / 1000).toFixed(1)} s` + (fb.length ? ` (${fb.join("; ")})` : "");
+      d.by === "no adaptation yet"
+        ? ""
+        : `Counters chosen by ${d.by} in ${(d.ms / 1000).toFixed(1)} s` + (d.fallbackReason ? ` (${d.fallbackReason})` : "");
   }
 
   const last = cur.rounds.at(-1);
@@ -217,9 +207,6 @@ function render(v) {
     .join("");
 
   $("#situation").textContent = d?.situation ?? "";
-  $("#prompt").textContent = t?.prompt
-    ? `${t.prompt[0].content}\n\n(two short example exchanges)\n\n${t.prompt.at(-1).content}`
-    : "No language model this time; the boss used an authored taunt.";
 }
 
 let lastAttempts = [];

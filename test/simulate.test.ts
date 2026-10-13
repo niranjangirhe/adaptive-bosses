@@ -1,14 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GliclassModel, RulesModel } from "../src/decision.ts";
-import { Ollama } from "../src/ollama.ts";
 import { simulate, skill } from "../src/simulate.ts";
 
 const offline = (async () => {
   throw new Error("offline");
 }) as typeof fetch;
-const services = () => ({ gliclass: new GliclassModel("http://fake", offline), rules: new RulesModel(), ollama: new Ollama("http://fake", offline) });
-const opts = { bots: ["flanker", "ranged"], attempts: 8, strength: 55, seed: 2, decider: "rules", voice: null };
+const services = () => ({ gliclass: new GliclassModel("http://fake", offline), rules: new RulesModel() });
+const opts = { bots: ["flanker", "ranged"], attempts: 8, strength: 55, seed: 2, decider: "rules" };
 
 test("bots get better with every attempt", () => {
   assert.equal(skill(1), 0);

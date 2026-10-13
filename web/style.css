@@ -120,27 +120,7 @@ button:disabled { opacity: 0.5; cursor: default; }
 .side { display: flex; flex-direction: column; gap: 18px; }
 
 
-.speech { margin: 16px 0 12px; }
-.bubble {
-  position: relative;
-  margin: 0;
-  padding: 14px 16px;
-  background: var(--surface-2);
-  border-radius: 14px;
-  font-size: 18px;
-  min-height: 58px;
-}
-.bubble::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  border: 8px solid transparent;
-  border-top: 0;
-  border-bottom-color: var(--surface-2);
-}
-.bubble.thinking { color: var(--muted); font-style: italic; }
-.credit { font-size: 12px; margin: 6px 2px 0; min-height: 18px; }
+.credit { font-size: 12px; margin: 12px 2px 4px; min-height: 18px; }
 
 /* behind the scenes */
 .behind summary { cursor: pointer; list-style: none; }
@@ -223,7 +203,6 @@ table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
 th { color: var(--muted); font-weight: 500; white-space: nowrap; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-td.line { min-width: 240px; }
 .fb { color: var(--bad); font-size: 11px; }
 #sim-results { display: flex; flex-direction: column; gap: 18px; }
 
@@ -266,7 +245,6 @@ td.line { min-width: 240px; }
 .arena { border-radius: 12px; overflow: hidden; }
 .arena svg { display: block; width: 100%; max-width: 520px; height: auto; margin: 0 auto; }
 .side .bar { grid-template-columns: 112px 1fr 40px; }
-.bubble.boss { font-size: 17px; }
 .tell { margin: 4px 0 0; font-weight: 600; min-height: 22px; color: var(--accent); }
 .result { margin: 2px 0 12px; min-height: 22px; font-size: 14px; }
 

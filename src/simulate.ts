@@ -5,13 +5,12 @@
  * the sketch on the research page assumes players do.
  *
  * It records how hard each attempt was for both bosses, and times every
- * adaptation step (decision and taunt), so it doubles as a benchmark.
+ * adaptation, so it doubles as a benchmark.
  */
 import os from "node:os";
 import type { DeciderHealth } from "./decision.ts";
 import { COUNTER_INFO, NO_COUNTERS, mulberry32, replayAttempt, type Move, type Run } from "./fight.ts";
 import { nextAttempt, type Services, type Settings } from "./game.ts";
-import type { LoadedModel } from "./ollama.ts";
 
 export const BOTS: Record<string, { label: string; weights: Partial<Record<Move, number>> }> = {
   flanker: { label: "Attacks from behind", weights: { flank: 0.6, roll: 0.15, strike: 0.15, shoot: 0.05, combo: 0.05 } },
@@ -37,15 +36,10 @@ export type SimAttempt = {
   adaptiveWon: boolean;
   staticWon: boolean;
   budget: Record<string, number>;
-  taunt: string;
   decisionBy: string;
-  tauntBy: string;
   decisionMs: number;
   decisionModelMs: number | null;
-  tauntMs: number;
-  tokensPerSecond: number | null;
   decisionFellBack: boolean;
-  tauntFellBack: boolean;
 };
 
 type Stats = { mean: number; p50: number; p95: number; max: number };
@@ -55,7 +49,7 @@ export type SimResult = {
   startedAt: string;
   wallSeconds: number;
   machine: { cpu: string; cores: number; ramGB: number; platform: string; node: string };
-  services: { decider: DeciderHealth | null; ollamaVersion: string | null; voiceModel: LoadedModel | null; serverRssMB: number };
+  services: { decider: DeciderHealth | null; serverRssMB: number };
   /** mean challenge per attempt across bots */
   curve: { static: number[]; adaptive: number[] };
   perBot: { bot: string; staticLate: number; adaptiveLate: number; staticWins: number; adaptiveWins: number }[];
@@ -66,10 +60,7 @@ export type SimResult = {
     inBandAdaptive: number;
     decisionMs: Stats;
     decisionModelMs: Stats | null;
-    tauntMs: Stats;
-    tokensPerSecond: number | null;
     decisionFallbacks: number;
-    tauntFallbacks: number;
   };
   attempts: SimAttempt[];
 };
@@ -131,7 +122,6 @@ export async function simulate(
       adaptiveRun = next.run;
       const a = botPlays(adaptiveRun, i, bot, randA);
       const d = next.decision;
-      const t = next.taunt;
       const row: SimAttempt = {
         bot,
         attempt: i + 1,
@@ -140,15 +130,10 @@ export async function simulate(
         staticWon: s.won,
         adaptiveWon: a.won,
         budget: { ...d.budget },
-        taunt: t.line,
         decisionBy: d.by,
-        tauntBy: t.by,
         decisionMs: d.ms,
         decisionModelMs: d.modelMs ?? null,
-        tauntMs: t.ms,
-        tokensPerSecond: t.stats && t.stats.generateMs > 0 ? (t.stats.outputTokens / t.stats.generateMs) * 1000 : null,
         decisionFellBack: Boolean(d.fallbackReason),
-        tauntFellBack: Boolean(t.fallbackReason),
       };
       rows.push(row);
       onAttempt?.(row, rows.length, total);
@@ -163,13 +148,8 @@ export async function simulate(
   // the first attempt has nothing to adapt to, so it isn't timed
   const adapting = rows.filter((r) => r.attempt > 1);
   const modelMs = adapting.flatMap((r) => (r.decisionModelMs === null ? [] : [r.decisionModelMs]));
-  const tps = adapting.flatMap((r) => (r.tokensPerSecond === null ? [] : [r.tokensPerSecond]));
 
-  const [decider, ollamaVersion, loaded] = await Promise.all([
-    services.gliclass.health(),
-    services.ollama.version(),
-    services.ollama.loaded(),
-  ]);
+  const decider = await services.gliclass.health();
 
   return {
     options: opts,
@@ -184,8 +164,6 @@ export async function simulate(
     },
     services: {
       decider: opts.decider === "gliclass" ? decider : null,
-      ollamaVersion: opts.voice ? ollamaVersion : null,
-      voiceModel: opts.voice ? (loaded.find((m) => m.name === opts.voice || m.name === `${opts.voice}:latest`) ?? null) : null,
       serverRssMB: process.memoryUsage().rss / 2 ** 20,
     },
     curve: { static: byAttempt("static"), adaptive: byAttempt("adaptive") },
@@ -207,10 +185,7 @@ export async function simulate(
       inBandAdaptive: inBand(late.map((r) => r.adaptive)),
       decisionMs: stats(adapting.map((r) => r.decisionMs)),
       decisionModelMs: modelMs.length ? stats(modelMs) : null,
-      tauntMs: stats(adapting.map((r) => r.tauntMs)),
-      tokensPerSecond: tps.length ? mean(tps) : null,
       decisionFallbacks: rows.filter((r) => r.decisionFellBack).length,
-      tauntFallbacks: rows.filter((r) => r.tauntFellBack).length,
     },
     attempts: rows,
   };
