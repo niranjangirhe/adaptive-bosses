@@ -69,9 +69,9 @@ export type Outcome = { dealt: number; taken: number; text: string };
 const BASE: Record<Move, Outcome> = {
   shoot: { dealt: 6, taken: 4, text: "Your shots land from a safe distance." },
   roll: { dealt: 0, taken: 0, text: "You roll clear of its swing." },
-  flank: { dealt: 12, taken: 8, text: "You slip behind it and hit hard." },
-  combo: { dealt: 10, taken: 10, text: "Your favourite combo connects." },
-  strike: { dealt: 8, taken: 10, text: "You trade blows head on." },
+  flank: { dealt: 12, taken: 4, text: "You slip behind it and hit hard." },
+  combo: { dealt: 10, taken: 6, text: "Your favourite combo connects." },
+  strike: { dealt: 8, taken: 7, text: "You trade blows head on." },
 };
 
 const AGAINST: Record<Counter, Partial<Record<Move, Outcome>>> = {
