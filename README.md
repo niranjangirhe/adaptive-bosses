@@ -72,7 +72,39 @@ npm run simulate -- --attempts 12 --strength 55 --decider gliclass
 
 In Windows PowerShell, quote the separator: `npm run simulate '--' --attempts 12 ...`.
 
-With the built-in rules, five bots and twelve attempts (`npm run simulate -- --decider rules`, seed 1), the static boss drops to about 30% challenge as the bots learn it and only 13% of later attempts land in the target band. The adaptive boss stays around 40%, with 60% of later attempts in the band. It is hardest right after the first attempt (60% on average), when it suddenly counters a habit the bot hasn't learned to read yet. These are bots, not people; whether the adaptive fights feel fair is a question for player tests.
+### Results
+
+This run used the built-in rules, all five bots, twelve attempts, "How much it adapts" at 55 and seed 1. The same seed always gives the same numbers, so you can reproduce it with `npm run simulate -- --decider rules`.
+
+![Challenge by attempt: the static boss falls below the 35 to 60% target band by attempt 4, while the adaptive boss stays in or near it](docs/simulate.png)
+
+How hard each attempt was, averaged over the five bots (share of health lost):
+
+| Attempt | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Static boss | 52% | 44% | 39% | 31% | 32% | 28% | 29% | 32% | 31% | 29% | 32% | 29% |
+| Adaptive boss | 52% | 60% | 53% | 50% | 48% | 35% | 46% | 39% | 37% | 36% | 41% | 42% |
+
+Each bot in the later attempts (7 to 12), and how many of its 12 attempts it won:
+
+| Bot | Static boss | Adaptive boss | Wins vs static | Wins vs adaptive |
+|---|---|---|---|---|
+| Attacks from behind | 28% | 42% | 12 | 12 |
+| Fights from range | 30% | 40% | 12 | 11 |
+| Dodges through attacks | 30% | 41% | 12 | 12 |
+| Repeats the same combo | 32% | 35% | 12 | 12 |
+| Varies their attacks | 32% | 42% | 12 | 12 |
+
+What this shows:
+
+- The static boss gets easy. Once the bots learn it, they lose only about 30% of their health, and just 13% of the later attempts land in the 35 to 60% target band.
+- The adaptive boss stays a challenge. Later attempts average about 40%, and 60% of them land in the band.
+- It is still fair. The bots won 59 of 60 fights against it, about the same as against the static boss. It makes fights harder, not unwinnable.
+- It is hardest at attempt 2 (60%). That is the first time it uses counters, and the bots haven't learned to read the tells yet. After that the bots catch up and the boss keeps shifting its points to their newest habit.
+
+The equal first attempt (52% for both) is expected: the boss knows nothing about the player yet, so both bosses fight the same way.
+
+These are bots, not people. Whether the adaptive fights feel fair to a person is a question for player tests.
 
 ## Layout
 
